@@ -1,0 +1,11 @@
+file_gen.sh
+sim/*
+lib/*
+FM_INFO
+fm/FM_INFO*
+fm/FM_WORK*
+fm/*_svf
+fm/*log*
+fm/*lck*
+!lib/empty.txt
+*.log
