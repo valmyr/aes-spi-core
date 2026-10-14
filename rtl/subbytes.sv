@@ -29,7 +29,13 @@ assign s_box_matrix = {
    {8'h8C, 8'hA1, 8'h89, 8'h0D, 8'hBF, 8'hE6, 8'h42, 8'h68, 8'h41, 8'h99, 8'h2D, 8'h0F, 8'hB0, 8'h54, 8'hBB, 8'h16}
 };
 localparam MATRIZ_LEN = 4;
-enum {IDLE, REMAPPING,DONE} next, current;
+typedef enum logic [1:0] {
+    IDLE,
+    REMAPPING,
+    DONE
+} state_t;
+
+state_t current, next;
 
 logic [7:0] rows, columns;
 logic [7:0] rows_nt, columns_nt;
@@ -71,6 +77,7 @@ always_ff@(posedge clock, negedge nreset)begin
         rows <= 0;
         columns <= 0;
         current <= IDLE;
+        output_data <= '{default:0};
     end else begin
         if (current == REMAPPING)
             output_data[rows][columns] <= s_box_matrix[s_box_y][s_box_x];
