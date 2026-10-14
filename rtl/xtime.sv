@@ -4,7 +4,7 @@
 // 
 // Create Date: 23/01/2026 03:23:32 PM
 // Design Name: 
-// Module Name: xtimer
+// Module Name: xtimes
 // Project Name: AES SPI CORE
 // Target Devices: 
 // Tool Versions: Vivado 2025.1
