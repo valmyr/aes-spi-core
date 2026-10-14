@@ -32,14 +32,16 @@ module xtimes(
     always_ff@(posedge clock, negedge nreset)begin
         if(!nreset)begin
             y_s0 <=0;
+            y_s1 <=0;
         end else begin
             if(ena)begin
                 y_s0 <= x_data;
                 y_s1 <= (x_data << 1);
-                if(top_bit) y_s1 <= y_s1 ^ 8'h1b;
+                if(top_bit) y_s2 <= y_s1 ^ 8'h1b;
+                else        y_s2 <= y_s1;
             end
         end
     end
-    assign y_data = y_s1;
+    assign y_data = y_s2;
     assign top_bit = y_s0[7];
 endmodule
