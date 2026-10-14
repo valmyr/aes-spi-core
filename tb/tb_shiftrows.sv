@@ -9,9 +9,9 @@ module tb;
     logic [7:0] uut_shiftrows_input_data[3:0][3:0];
     logic [7:0] uut_shiftrows_output_data[3:0][3:0];
 
+    localparam MATRIX_LEN = 4;
 
-
-    shiftrows uut_shiftrows(
+    shiftrows #(.MATRIX_LEN(MATRIX_LEN))uut_shiftrows(
         .input_data(uut_shiftrows_input_data),
         .output_data(uut_shiftrows_output_data)
     );
