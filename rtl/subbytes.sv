@@ -9,6 +9,7 @@ module subbytes(
     input  logic rready_i
 );
 
+logic [7:0] input_data_reg[3:0][3:0],
 logic [0:15][0:15][7:0]s_box_matrix;
 assign s_box_matrix = {
    {8'h63, 8'h7C, 8'h77, 8'h7B, 8'hF2, 8'h6B, 8'h6F, 8'hC5, 8'h30, 8'h01, 8'h67, 8'h2B, 8'hFE, 8'hD7, 8'hAB, 8'h76},
@@ -45,7 +46,7 @@ always_comb case(current)
     IDLE:begin
         ready_o = 1;
         rvalid_o = 0;
-        next = ready_o & valid_i ? REMAPPING: IDLE;
+        next = ready_o && valid_i ? REMAPPING: IDLE;
         rows_nt = 0;
         columns_nt = 0;
     end
@@ -79,6 +80,8 @@ always_ff@(posedge clock, negedge nreset)begin
         current <= IDLE;
         output_data <= '{default:0};
     end else begin
+        if(ready_o && valid_i)
+            input_data_reg <= input_data;
         if (current == REMAPPING)
             output_data[rows][columns] <=debug_out_data;
         rows <= rows_nt;
@@ -89,6 +92,6 @@ end
 
 assign debug_out_data = s_box_matrix[s_box_y][s_box_x];
 
-assign s_box_x = input_data[rows][columns][3:0];
-assign s_box_y = input_data[rows][columns][7:4];
+assign s_box_x = input_data_reg[rows][columns][3:0];
+assign s_box_y = input_data_reg[rows][columns][7:4];
 endmodule
