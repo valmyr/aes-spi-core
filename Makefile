@@ -38,8 +38,9 @@ syntax_pos_impl:
 		 ../$(TB_FILES)
 
 synthesis:
-	sed -i '8s/.*/create_clock -name sys_clk -period $(CLK_PERIOD) [get_ports clk]/' constraints/vending.sdc
-	cd sim && CLK_PERIOD=$(CLK_PERIOD) dc_shell -f ../synth/synth.tcl
+#sed -i '8s/.*/create_clock -name sys_clk -period $(CLK_PERIOD) [get_ports clk]/' constraints/vending.sdc
+#	cd sim && CLK_PERIOD=$(CLK_PERIOD) dc_shell -f ../synth/synth.tcl
+	cd sim && dc_shell -f ../synth/synth.tcl
 
 
 #Passo 2: Compilação/Elaboração
