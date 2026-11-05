@@ -1,15 +1,15 @@
 module subbytes(
     input  logic clock,
     input  logic nreset,
-    input  logic [7:0] input_data[3:0][3:0],
-    output logic [7:0] output_data[3:0][3:0],
+    input  logic [7:0] input_data[0:3][0:3],
+    output logic [7:0] output_data[0:3][0:3],
     input  logic valid_i,
     output logic ready_o ,
     output logic rvalid_o,
     input  logic rready_i
 );
 
-logic [7:0] input_data_reg[3:0][3:0],
+logic [7:0] input_data_reg[0:3][0:3];
 logic [0:15][0:15][7:0]s_box_matrix;
 assign s_box_matrix = {
    {8'h63, 8'h7C, 8'h77, 8'h7B, 8'hF2, 8'h6B, 8'h6F, 8'hC5, 8'h30, 8'h01, 8'h67, 8'h2B, 8'hFE, 8'hD7, 8'hAB, 8'h76},
