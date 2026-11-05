@@ -76,7 +76,7 @@ run_gui_pos_impl:compile_pos_impl
 #Passo 4: Abrir o waveform no Verdi
 waves:run
 	cd $(SIM_DIR) &&\
-	verdi -ssf waves.fsdb -sswr tb_vending_machine.rc
+	verdi -ssf waves.fsdb 
 
 #Passo 5: Executar o Formality
 formality:synthesis

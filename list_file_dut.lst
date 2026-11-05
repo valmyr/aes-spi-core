@@ -1,1 +1,11 @@
-../rtl/shiftrows.sv
+../rtl/common/matrix2vec.sv
+../rtl/common/vec2matrix.sv
+../rtl/minisoc_aes/decoder_xtimes.sv
+../rtl/minisoc_aes/minisoc_aes_mixcolumns.sv
+../rtl/minisoc_aes/minisoc_aes_shiftrows.sv
+../rtl/minisoc_aes/minisoc_aes_subbytes.sv
+../rtl/minisoc_aes/minisoc_aes_top.sv
+../rtl/minisoc_aes/xtimes.sv
+../rtl/minisoc_mem
+../rtl/minisoc_pll
+../rtl/minisoc_spi
