@@ -1,35 +1,37 @@
 module tb;
-
-logic signed [31:0] a;
-logic signed [31:0] b;
-logic signed [31:0] c;
-logic ena;
-logic [31:0] counter;
-logic clock;
-logic [31:0] ref_result;
-somador u_somador(
-	.ena(ena),
-	.a(a),
-	.b(b),
-	.c(c),
-	.clock(clock)
+logic clock,nreset;
+logic [127:0] data;
+aes_core uut_aes_core(
+    .clock(clock),
+    .nreset(nreset),
+    .data_input(data),
+    .data_output_subbytes(),
+    .data_output_shiftrows()
 );
 
 initial begin 
+	// Basic: dump all signals from tb_top downward, all hierarchy
+    $fsdbDumpfile("waves.fsdb");
+    // Dump multi-dimensional arrays (memories, packed arrays)
+    $fsdbDumpMDA();
+    $fsdbDumpvars(0, tb);         // 0 = all levels of hierarchy
+    
+
 	clock = 0;
-	ena =1;
-end
+	nreset =1;
+	#1
+	nreset = 0;
+	#1
+	nreset=1;
 
-always clock = ~clock;
 
-always_ff@(posedge clock)begin
-	a <= $random();
-	b <= $random();
-	ref_result <= a + b;
-	if(ref_result == c)
-		$display("Pass");
-	else
-		$display("Fail %d + %d = %d, %d",a,b,ref_result,c);
+	#(180);
+    $fsdbDumpoff;
+    $finish;
 
 end
+assign data =128'h193de3bea0f4e22b9ac68d2ae9f84808;
+
+always #1 clock = ~clock;
+
 endmodule
