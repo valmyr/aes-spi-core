@@ -3,6 +3,7 @@ module subbytes(
     input  logic nreset,
     input  logic [7:0] input_data[0:3][0:3],
     output logic [7:0] output_data[0:3][0:3],
+    input  logic [3:0] matrix_len           ,
     input  logic valid_i,
     output logic ready_o ,
     output logic rvalid_o,
@@ -38,30 +39,35 @@ typedef enum logic [1:0] {
 
 state_t current, next;
 
-logic [7:0] rows, columns;
-logic [7:0] rows_nt, columns_nt;
-logic [7:0] debug_out_data;
-logic [3:0] s_box_x,s_box_y;
+logic [7:0] rows;
+logic [7:0] rows_nt;
+logic [7:0] debug_out_data0;
+logic [7:0] debug_out_data1;
+logic [7:0] debug_out_data2;
+logic [7:0] debug_out_data3;
+logic [7:0] matrix_len_reg;
+logic [3:0] s_box_x0,s_box_y0;
+logic [3:0] s_box_x1,s_box_y1;
+logic [3:0] s_box_x2,s_box_y2;
+logic [3:0] s_box_x3,s_box_y3;
+
 always_comb case(current)
     IDLE:begin
         ready_o = 1;
         rvalid_o = 0;
         next = ready_o && valid_i ? REMAPPING: IDLE;
         rows_nt = 0;
-        columns_nt = 0;
     end
     REMAPPING:begin
         ready_o = 0;
         rvalid_o = 0;
-        columns_nt = (columns == MATRIZ_LEN-1) ? 0 : columns + 1'b1;
-        rows_nt = (columns == MATRIZ_LEN-1 && rows != MATRIZ_LEN-1) ? rows + 1'b1 : rows;
-        next   = (columns == MATRIZ_LEN-1) && (rows == MATRIZ_LEN-1) ? DONE: REMAPPING;
+        rows_nt = rows + 1'b1 ;
+        next   = (rows == MATRIZ_LEN-1) ? DONE: REMAPPING;
     end
     DONE:begin
         rvalid_o = 1;
         ready_o = 0;
         rows_nt = rows;
-        columns_nt = columns;
         next =(rvalid_o && rready_i) ? IDLE : DONE;
     end
     default: begin
@@ -69,29 +75,45 @@ always_comb case(current)
         rvalid_o = 0;
         next = ready_o & valid_i ? REMAPPING: IDLE;
         rows_nt = 0;
-        columns_nt = 0;
     end
 endcase
 
 always_ff@(posedge clock, negedge nreset)begin
     if(!nreset)begin
         rows <= 0;
-        columns <= 0;
         current <= IDLE;
         output_data <= '{default:0};
+        matrix_len_reg <= 4;
     end else begin
-        if(ready_o && valid_i)
+        if(ready_o && valid_i)begin
             input_data_reg <= input_data;
-        if (current == REMAPPING)
-            output_data[rows][columns] <=debug_out_data;
+            matrix_len_reg <= matrix_len;
+        end
+        if (current == REMAPPING)begin
+            output_data[rows][0] <=debug_out_data0;
+            output_data[rows][1] <=debug_out_data1;
+            output_data[rows][2] <=debug_out_data2;
+            output_data[rows][3] <=debug_out_data3;
+        end
         rows <= rows_nt;
-        columns <= columns_nt;
         current <= next;
     end
 end
 
-assign debug_out_data = s_box_matrix[s_box_y][s_box_x];
+assign debug_out_data0 = s_box_matrix[s_box_y0][s_box_x0];
+assign debug_out_data1 = s_box_matrix[s_box_y1][s_box_x1];
+assign debug_out_data2 = s_box_matrix[s_box_y2][s_box_x2];
+assign debug_out_data3 = s_box_matrix[s_box_y3][s_box_x3];
 
-assign s_box_x = input_data_reg[rows][columns][3:0];
-assign s_box_y = input_data_reg[rows][columns][7:4];
+assign s_box_x0 = input_data_reg[rows][0][3:0];
+assign s_box_y0 = input_data_reg[rows][0][7:4];
+
+assign s_box_x1 = input_data_reg[rows][1][3:0];
+assign s_box_y1 = input_data_reg[rows][1][7:4];
+
+assign s_box_x2 = input_data_reg[rows][2][3:0];
+assign s_box_y2 = input_data_reg[rows][2][7:4];
+
+assign s_box_x3 = input_data_reg[rows][3][3:0];
+assign s_box_y3 = input_data_reg[rows][3][7:4];
 endmodule
