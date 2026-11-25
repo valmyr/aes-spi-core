@@ -12,6 +12,12 @@ logic [2:0] counter_nt;
 
 logic [7:0]  op_input_data_intern[0:STAGES_XTIMES_PARALLEL-1];
 logic [7:0]  fg_output_data_intern[0:STAGES_XTIMES_PARALLEL-1];
+
+
+logic [7:0]  gf_input_data_transposed[0:STAGES_XTIMES_PARALLEL-1][0:STAGES_XTIMES_PARALLEL-1];
+ 
+
+
 generate
     genvar i, j;
     for(i = 0; i < 4; i++)begin
@@ -19,10 +25,13 @@ generate
                 .clock(clock),
                 .nreset(nreset),
                 .ena(ena),
-                .gf_input_data(gf_input_data[i]),
+                .gf_input_data(gf_input_data_transposed[i]),
                 .op_input_data(op_input_data_intern), 
                 .fg_output_data(fg_output_data_intern[i])
             );
+        for(j = 0; j < 4; j++)begin
+            assign gf_input_data_transposed[i][j] = gf_input_data[j][i];
+        end
     end
 endgenerate
 
@@ -47,8 +56,11 @@ always_ff@(posedge clock, negedge nreset) begin
     end
 end
 
+logic [127:0]debug;
 
-
-
+matrix2vec#(.MATRIX_LEN(4)) matrix2vec_debug(
+    .data_in(fg_output_data),
+    .data_out(debug)
+);
 
 endmodule
