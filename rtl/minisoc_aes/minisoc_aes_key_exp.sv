@@ -12,8 +12,8 @@ module aes_key_exp(
 );
 
 
-logic [7:0]  key_master_matrix [0:3][0:3];
-logic [7:0]  key_master_matrix0 [0:3][0:3];
+logic [7:0]  new_key_matrix [0:3][0:3];
+logic [7:0]  old_key_matrix [0:3][0:3];
 logic [0:9][31:0] rcon_rounds_rom;
 logic [31:0] rcon_round;
 logic       ut_subbytes_clock;
@@ -39,49 +39,36 @@ state_t current_state, next;
 
 logic [3:0]counter_word;
 logic [3:0]next_counter_word;
+logic [31:0] subword, word_w3_old,word_w_i_old,word_w_i_new;
 assign rcon_rounds_rom = {
     32'h01000000,32'h02000000,32'h04000000,32'h08000000,32'h10000000,32'h20000000,32'h40000000,32'h80000000,32'h1b000000,32'h36000000
-
 };
-
-logic [31:0] subword, temporary0,temporary1,temporary2;
-
-logic [31:0] xor_stage0;
-always_comb rcon_round = rcon_rounds_rom[iteration_current];
-assign ut_subbytes_clock = clock;
-assign ut_subbytes_nreset = nreset;
-
-
-assign temporary0 = {<<8{ut_subbytes_input_data[3]}} ;
-assign temporary1 = {<<8{ut_subbytes_input_data[3-counter_word-1]}} ;
-assign temporary2 = {>>8{key_master_matrix[counter_word]}} ;
 always_ff@(posedge clock, negedge nreset)begin
     if(!nreset)begin
         current_state <= IDLE;
         subword <=0;
         counter_word <=0;
-        xor_stage0 <= 0;    
-        key_master_matrix <= {default:0};
+        new_key_matrix <= {default:0};
+        iteration_next <=0;
     end else begin
         current_state <= next;
-        counter_word <= next_counter_word;
-        if(current_state == ROTWORD)begin
-            subword <= {subword[23:0],subword[31:24]};
-            xor_stage0 <= {subword[23:0],subword[31:24]} ^ rcon_round ^ temporary0;
+        counter_word <= (counter_word ==2) ? 0 : next_counter_word;
+        case(current_state)
+            ROTWORD:begin
             // deslocamento com composição de xor's
-           {>>{key_master_matrix[0]}} = {subword[23:0],subword[31:24]} ^ rcon_round ^ temporary0; 
-        end
-        if(current_state == NEXT_WORD)begin
-            //{>>{key_master_matrix[counter_word+1]}} <= key_master_matrix[counter_word] ^ temporary0;
-            {>>{key_master_matrix[counter_word+1]}} <= temporary1 ^ temporary2;
-        end
-        if(current_state == DONE)begin
-            iteration_next <= iteration_current +1;
-        end
-       if(current_state == SUBWORD)begin
-            subword <= {ut_subbytes_output_data[0][3],ut_subbytes_output_data[0][2],ut_subbytes_output_data[0][1],ut_subbytes_output_data[0][0]};
-        end
-        
+                {<<8{new_key_matrix[3]}} <= {subword[23:0],subword[31:24]} ^ rcon_round ^ word_w3_old; 
+            end
+            NEXT_WORD:begin
+                {<<8{new_key_matrix[3-(counter_word+1)]}} <= word_w_i_old ^ word_w_i_new;
+            end
+            DONE:begin
+                iteration_next <= iteration_current +1;
+            end
+            SUBWORD:begin
+                //subword <= {ut_subbytes_output_data[0][3],ut_subbytes_output_data[0][2],ut_subbytes_output_data[0][1],ut_subbytes_output_data[0][0]};
+                subword<= {<<8{ut_subbytes_output_data[0]}};
+            end
+        endcase
     end
 end
 always_comb case(current_state)
@@ -116,7 +103,7 @@ always_comb case(current_state)
             rvalid_o = 0;
             ut_subbytes_valid_i =0;
             ut_subbytes_rready_i =0;
-            next = counter_word < 2 ? NEXT_WORD: DONE;
+            next = counter_word < 2? NEXT_WORD: DONE;
             next_counter_word =  counter_word+1;
 
         end
@@ -161,12 +148,20 @@ subbytes ut_subbytes(
 
 vec2matrix #(.MATRIX_LEN(4))vex2matrix_unflatten(
     .data_in(key_current),
-    .data_out(key_master_matrix0)
+    .data_out(old_key_matrix)
 );
 
 matrix2vec #(.MATRIX_LEN(4))matrix2vec_flatten1(
-    .data_in(key_master_matrix),
+    .data_in(new_key_matrix),
     .data_out(key_next)
 );
-assign ut_subbytes_input_data = key_master_matrix0;
+assign ut_subbytes_input_data = old_key_matrix;
+assign ut_subbytes_clock = clock;
+assign ut_subbytes_nreset = nreset;
+assign word_w3_old = {<<8{ut_subbytes_input_data[3]}} ;
+assign word_w_i_old = {<<8{ut_subbytes_input_data[3-counter_word-1]}} ;
+assign word_w_i_new = {<<8{new_key_matrix[3-counter_word]}} ;
+always_comb rcon_round = rcon_rounds_rom[iteration_current];
+
+
 endmodule
