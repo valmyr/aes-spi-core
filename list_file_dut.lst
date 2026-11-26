@@ -1,7 +1,10 @@
 ../rtl/common/matrix2vec.sv
 ../rtl/common/vec2matrix.sv
 ../rtl/minisoc_aes/decoder_xtimes.sv
+../rtl/minisoc_aes/minisoc_aes_gf_256.sv
 ../rtl/minisoc_aes/minisoc_aes_mixcolumns.sv
+../rtl/minisoc_aes/misoc_aes_addroundkey.sv
+../rtl/minisoc_aes/minisoc_aes_key_exp.sv
 ../rtl/minisoc_aes/minisoc_aes_shiftrows.sv
 ../rtl/minisoc_aes/minisoc_aes_subbytes.sv
 ../rtl/minisoc_aes/minisoc_aes_top.sv
@@ -9,3 +12,4 @@
 ../rtl/minisoc_mem
 ../rtl/minisoc_pll
 ../rtl/minisoc_spi
+../rtl/minisoc_aes/minisoc_aes_control_unit.sv
