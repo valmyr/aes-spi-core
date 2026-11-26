@@ -73,7 +73,7 @@ run_pos_impl:compile_pos_impl
 run_gui_pos_impl:compile_pos_impl
 	cd $(SIM_DIR) && \
 	./simv -gui
-#Passo 4: Abrir o waveform no Verdi
+#Passo 4: Abrir o waveform no Verdi -sswr signal.rc
 waves:run
 	cd $(SIM_DIR) &&\
 	verdi -ssf waves.fsdb 
