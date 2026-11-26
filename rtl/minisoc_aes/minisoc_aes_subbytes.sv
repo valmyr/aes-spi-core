@@ -41,10 +41,10 @@ state_t current, next;
 
 logic [7:0] rows;
 logic [7:0] rows_nt;
-logic [7:0] debug_out_data0;
-logic [7:0] debug_out_data1;
-logic [7:0] debug_out_data2;
-logic [7:0] debug_out_data3;
+logic [7:0] remapping_out_data00;
+logic [7:0] remapping_out_data01;
+logic [7:0] remapping_out_data02;
+logic [7:0] remapping_out_data03;
 logic [7:0] matrix_len_reg;
 logic [3:0] s_box_x0,s_box_y0;
 logic [3:0] s_box_x1,s_box_y1;
@@ -90,20 +90,20 @@ always_ff@(posedge clock, negedge nreset)begin
             matrix_len_reg <= matrix_len;
         end
         if (current == REMAPPING)begin
-            output_data[rows][0] <=debug_out_data0;
-            output_data[rows][1] <=debug_out_data1;
-            output_data[rows][2] <=debug_out_data2;
-            output_data[rows][3] <=debug_out_data3;
+            output_data[rows][0] <=remapping_out_data00;
+            output_data[rows][1] <=remapping_out_data01;
+            output_data[rows][2] <=remapping_out_data02;
+            output_data[rows][3] <=remapping_out_data03;
         end
         rows <= rows_nt;
         current <= next;
     end
 end
 
-assign debug_out_data0 = s_box_matrix[s_box_y0][s_box_x0];
-assign debug_out_data1 = s_box_matrix[s_box_y1][s_box_x1];
-assign debug_out_data2 = s_box_matrix[s_box_y2][s_box_x2];
-assign debug_out_data3 = s_box_matrix[s_box_y3][s_box_x3];
+assign remapping_out_data00 = s_box_matrix[s_box_y0][s_box_x0];
+assign remapping_out_data01 = s_box_matrix[s_box_y1][s_box_x1];
+assign remapping_out_data02 = s_box_matrix[s_box_y2][s_box_x2];
+assign remapping_out_data03 = s_box_matrix[s_box_y3][s_box_x3];
 
 assign s_box_x0 = input_data_reg[rows][0][3:0];
 assign s_box_y0 = input_data_reg[rows][0][7:4];
