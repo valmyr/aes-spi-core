@@ -14,6 +14,7 @@ localparam MATRIX_LEN = 4;
 //ShiftRows Rotacional...
 logic [7:0] ut_shiftrows_input_data[0:3][0:3];
 logic [7:0] ut_shiftrows_output_data[0:3][0:3];
+logic uit_shift_rows_ena;
     
 //SubBytes...
 logic [7:0] ut_subbytes_input_data[0:3][0:3];
@@ -24,7 +25,10 @@ logic       ut_subbytes_rvalid_o;
 logic       ut_subbytes_rready_i;
 
 // Round key
+logic [127:0] ut_addroundkey_key;
+logic [127:0] ut_addroundkey_data_in;
 logic [127:0] ut_addroundkey_data_out;
+logic ut_addroundkey_ena;
 
 //Mix Columns
 logic       ut_mixcolumns_ena;
@@ -55,6 +59,8 @@ logic          ut_control_unit_aes_core_ready_o;
 logic          ut_control_unit_aes_core_rvalid_o;
 logic          ut_control_unit_aes_core_rready_i;
 logic          ut_control_unit_mixcolumns_ena;
+logic          ut_control_unit_shift_rows_ena;
+logic          ut_control_unit_addroundkey_ena;
 logic [7:0]ut_mixcolumns_fg_output_data[0:3][0:3];
 
 
@@ -72,10 +78,25 @@ always_comb begin
     end
 end
 
+assign ut_subbytes_valid_i                 = ut_control_unit_subbytes_valid_i;
+assign ut_control_unit_subbytes_ready_o    = ut_subbytes_ready_o ;
+assign ut_control_unit_subbytes_rvalid_o   = ut_subbytes_rvalid_o ;
+assign ut_subbytes_rready_i                = ut_control_unit_subbytes_rready_i;
+assign ut_aes_key_exp_valid_i              = ut_control_unit_aes_key_exp_valid_i;
+assign ut_control_unit_aes_key_exp_ready_o = ut_aes_key_exp_ready_o;
+assign ut_control_unit_aes_key_exp_rvalid_o= ut_aes_key_exp_rvalid_o;
+assign ut_aes_key_exp_rready_i             = ut_control_unit_aes_key_exp_rready_i;
+assign ut_control_unit_aes_core_valid_i    = aes_core_valid_i;
+assign aes_core_ready_o                    = ut_control_unit_aes_core_ready_o;
+assign aes_core_rvalid_o                   = ut_control_unit_aes_core_rvalid_o ;
+assign ut_control_unit_aes_core_rready_i   = aes_core_rready_i;
+assign ut_mixcolumns_ena                   = ut_control_unit_mixcolumns_ena;
+assign uit_shift_rows_ena                  = ut_control_unit_shift_rows_ena;
+assign ut_addroundkey_ena                  = ut_control_unit_addroundkey_ena;
 
 
-
-
+assign ut_addroundkey_key =aes_core_key_input;
+assign ut_addroundkey_data_in = aes_core_data_input;
 //vec2matrix
 vec2matrix #(.MATRIX_LEN(MATRIX_LEN))vex2matrix_unflatten(
     .data_in(ut_addroundkey_data_out),
@@ -85,6 +106,8 @@ vec2matrix #(.MATRIX_LEN(MATRIX_LEN))vex2matrix_unflatten(
 //ShiftRows ut
 
 shiftrows #(.MATRIX_LEN(MATRIX_LEN))ut_shiftrows(
+    .clock(clock),
+    .nreset(nreset),
     .input_data(ut_shiftrows_input_data),
     .output_data(ut_shiftrows_output_data)
 );
@@ -92,7 +115,9 @@ shiftrows #(.MATRIX_LEN(MATRIX_LEN))ut_shiftrows(
 
 
 addroundkey ut_addroundkey(
-    .data_in(data_input),
+    .clock(clock),
+    .nreset(nreset),
+    .data_in(ut_addroundkey_data_in),
     .key(ut_addroundkey_key),
     .data_out(ut_addroundkey_data_out)
 );
@@ -136,19 +161,6 @@ aes_key_exp ut_aes_key_exp(
 );
 
 
-assign ut_subbytes_valid_i                 = ut_control_unit_subbytes_valid_i;
-assign ut_control_unit_subbytes_ready_o    = ut_subbytes_ready_o ;
-assign ut_control_unit_subbytes_rvalid_o   = ut_subbytes_rvalid_o ;
-assign ut_subbytes_rready_i                = ut_control_unit_subbytes_rready_i;
-assign ut_aes_key_exp_valid_i              = ut_control_unit_aes_key_exp_valid_i;
-assign ut_control_unit_aes_key_exp_ready_o = ut_aes_key_exp_ready_o;
-assign ut_control_unit_aes_key_exp_rvalid_o= ut_aes_key_exp_rvalid_o;
-assign ut_aes_key_exp_rready_i             = ut_control_unit_aes_key_exp_rready_i;
-assign ut_control_unit_aes_core_valid_i    = aes_core_valid_i;
-assign aes_core_ready_o                    = ut_control_unit_aes_core_ready_o;
-assign aes_core_rvalid_o                   = ut_control_unit_aes_core_rvalid_o ;
-assign ut_control_unit_aes_core_rready_i   = aes_core_rready_i;
-assign ut_mixcolumns_ena                   = ut_control_unit_mixcolumns_ena;
 
 
 aes_control_unit ut_aes_control_unit(
@@ -166,16 +178,18 @@ aes_control_unit ut_aes_control_unit(
    .aes_core_ready_o(ut_control_unit_aes_core_ready_o), 
    .aes_core_rvalid_o(ut_control_unit_aes_core_rvalid_o),
    .aes_core_rready_i(ut_control_unit_aes_core_rready_i),
-   .mixcolumns_ena(ut_control_unit_mixcolumns_ena)
+   .mixcolumns_ena(ut_control_unit_mixcolumns_ena),
+   .shift_rows_ena(ut_control_unit_shift_rows_ena),
+   .addroundkey_ena(ut_control_unit_addroundkey_ena)
 );
 
 matrix2vec #(.MATRIX_LEN(MATRIX_LEN))matrix2vec_flatten0(
     .data_in(ut_subbytes_output_data),
-    .data_out(data_output_subbytes)
+    .data_out()
 );
 matrix2vec #(.MATRIX_LEN(MATRIX_LEN))matrix2vec_flatten1(
     .data_in(ut_shiftrows_output_data),
-    .data_out(data_output_shiftrows)
+    .data_out()
 );
 
 

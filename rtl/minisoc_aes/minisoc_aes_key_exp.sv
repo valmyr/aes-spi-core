@@ -35,7 +35,7 @@ typedef enum logic [2:0] {
 } state_t;
 
 
-state_t current_state, next;
+state_t current, next;
 
 logic [3:0]counter_word;
 logic [3:0]next_counter_word;
@@ -45,15 +45,15 @@ assign rcon_rounds_rom = {
 };
 always_ff@(posedge clock, negedge nreset)begin
     if(!nreset)begin
-        current_state <= IDLE;
+        current <= IDLE;
         subword <=0;
         counter_word <=0;
         new_key_matrix <= {default:0};
         iteration_next <=0;
     end else begin
-        current_state <= next;
+        current <= next;
         counter_word <= (counter_word ==2) ? 0 : next_counter_word;
-        case(current_state)
+        case(current)
             ROTWORD:begin
             // deslocamento com composição de xor's
                 {<<8{new_key_matrix[3]}} <= {subword[23:0],subword[31:24]} ^ rcon_round ^ word_w3_old; 
@@ -71,7 +71,7 @@ always_ff@(posedge clock, negedge nreset)begin
         endcase
     end
 end
-always_comb case(current_state)
+always_comb case(current)
         IDLE:begin
             ready_o = 1;
             rvalid_o = 0;
