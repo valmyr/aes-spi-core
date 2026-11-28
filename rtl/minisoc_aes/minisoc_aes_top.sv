@@ -61,6 +61,7 @@ logic          ut_control_unit_aes_core_rready_i;
 logic          ut_control_unit_mixcolumns_ena;
 logic          ut_control_unit_shift_rows_ena;
 logic          ut_control_unit_addroundkey_ena;
+logic    [3:0] ut_control_unit_round_count;
 logic [7:0]ut_mixcolumns_fg_output_data[0:3][0:3];
 
 
@@ -91,40 +92,43 @@ assign aes_core_ready_o                    = ut_control_unit_aes_core_ready_o;
 assign aes_core_rvalid_o                   = ut_control_unit_aes_core_rvalid_o ;
 assign ut_control_unit_aes_core_rready_i   = aes_core_rready_i;
 assign ut_mixcolumns_ena                   = ut_control_unit_mixcolumns_ena;
-assign uit_shift_rows_ena                  = ut_control_unit_shift_rows_ena;
+assign ut_shift_rows_ena                  = ut_control_unit_shift_rows_ena;
 assign ut_addroundkey_ena                  = ut_control_unit_addroundkey_ena;
 
 
 assign ut_addroundkey_key =aes_core_key_input;
 assign ut_addroundkey_data_in = aes_core_data_input;
+
+
+// addrround key
+add_round_key ut_addroundkey(
+    .clock(clock),
+    .nreset(nreset),
+    .ena(ut_addroundkey_ena),
+    .data_in(ut_addroundkey_data_in),
+    .key(ut_addroundkey_key),
+    .data_out(ut_addroundkey_data_out)
+);
+
 //vec2matrix
 vec2matrix #(.MATRIX_LEN(MATRIX_LEN))vex2matrix_unflatten(
     .data_in(ut_addroundkey_data_out),
-    .data_out(ut_subbytes_input_data)
+    .data_out(ut_shiftrows_input_data)
 );
 
-//ShiftRows ut
 
-shiftrows #(.MATRIX_LEN(MATRIX_LEN))ut_shiftrows(
+//ShiftRows
+shift_rows #(.MATRIX_LEN(MATRIX_LEN))ut_shiftrows(
     .clock(clock),
     .nreset(nreset),
+    .ena(ut_shift_rows_ena),
     .input_data(ut_shiftrows_input_data),
     .output_data(ut_shiftrows_output_data)
 );
     
 
 
-addroundkey ut_addroundkey(
-    .clock(clock),
-    .nreset(nreset),
-    .data_in(ut_addroundkey_data_in),
-    .key(ut_addroundkey_key),
-    .data_out(ut_addroundkey_data_out)
-);
-
-
-
-subbytes ut_subbytes(
+sub_bytes ut_subbytes(
     .clock(clock),
     .nreset(nreset),
     .input_data(ut_subbytes_input_data),
@@ -137,7 +141,7 @@ subbytes ut_subbytes(
 
 );
     
-mixcolumns#(.STAGES_XTIMES_SERIAL(8),.STAGES_XTIMES_PARALLEL(4)) ut_mixcolumns(
+mix_columns#(.STAGES_XTIMES_SERIAL(8),.STAGES_XTIMES_PARALLEL(4)) ut_mixcolumns(
     .clock(clock),
     .nreset(nreset),
     .ena(ut_mixcolumns_ena),
@@ -146,7 +150,19 @@ mixcolumns#(.STAGES_XTIMES_SERIAL(8),.STAGES_XTIMES_PARALLEL(4)) ut_mixcolumns(
     .fg_output_data(ut_mixcolumns_fg_output_data)
 );
 
+//Mux com registrador.
+always_ff@(posedge clock, negedge nreset)begin
+    if(!nreset)begin
+        ut_aes_key_exp_key_current <= 0;
+    end else 
+        if(ut_control_unit_shift_rows_ena)
+            if((ut_control_unit_round_count == 0))
+                ut_aes_key_exp_key_current <=  ut_addroundkey_data_out;  
+            else
+                ut_aes_key_exp_key_current <= (ut_control_unit_round_count == 10) ?  0: ut_aes_key_exp_key_next;  
+end
 
+assign ut_aes_key_exp_iteration_current = ut_control_unit_round_count;
 aes_key_exp ut_aes_key_exp(
    .clock(clock),
    .nreset(nreset),
@@ -159,8 +175,6 @@ aes_key_exp ut_aes_key_exp(
    .rvalid_o(ut_aes_key_exp_rvalid_o),
    .rready_i(ut_aes_key_exp_rready_i)
 );
-
-
 
 
 aes_control_unit ut_aes_control_unit(
@@ -180,7 +194,8 @@ aes_control_unit ut_aes_control_unit(
    .aes_core_rready_i(ut_control_unit_aes_core_rready_i),
    .mixcolumns_ena(ut_control_unit_mixcolumns_ena),
    .shift_rows_ena(ut_control_unit_shift_rows_ena),
-   .addroundkey_ena(ut_control_unit_addroundkey_ena)
+   .addroundkey_ena(ut_control_unit_addroundkey_ena),
+   .round_count(ut_control_unit_round_count)
 );
 
 matrix2vec #(.MATRIX_LEN(MATRIX_LEN))matrix2vec_flatten0(
